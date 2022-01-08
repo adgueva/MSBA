@@ -1,0 +1,49 @@
+---
+title: "Lydia_DataVis_Lyrics"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library('geniusr')
+```
+
+# Sentiment Analysis for each song
+```{r}
+library(tidytext)
+
+lyrics_token <- tibble(title = spotify_lyrics$title,
+                      artist = spotify_lyrics$artist,
+                      year = spotify_lyrics$year,
+                     text = spotify_lyrics$lyrics) %>% unnest_tokens(word,text)
+
+meaningless_words <- list("verse","1","2",'chorus','outro','bridge','intro','urlcopyembedcopy','bad333embedshare','touch252embedshare','yeah','doo','ya','ayy','gaga','bradley','cooper','feat','la','ooh','ah','ha','hey','wanna','gonna','da','gotta','ft','em','uh','mmm')
+lyrics_token <- lyrics_token %>% filter(!word %in% meaningless_words) %>% filter(!word %in% stop_words$word)
+
+write.csv(lyrics_token,"C:/Users/17348/OneDrive/Desktop/ISOM675 Data Vis/lyrics_token.csv", row.names = T)
+```
+
+```{r}
+afinn <- lyrics_token %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(title, artist,year) %>% 
+  summarise(sentiment = sum(value)) %>% 
+  mutate(method = "AFINN")
+```
+
+```{r}
+sentiments_by_song <- left_join(afinn,spotify)
+
+write.csv(sentiments_by_song[,1:16],"C:/Users/17348/OneDrive/Desktop/ISOM675 Data Vis/lyrics_sentiments.csv", row.names = T)
+```
+
+# top words 
+```{r}
+word_count <- lyrics_token %>%
+  count(word, sort = TRUE) 
+```
+
+
